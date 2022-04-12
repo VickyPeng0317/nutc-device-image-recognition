@@ -2,7 +2,7 @@ from imutils.perspective import four_point_transform
 from imutils import contours
 import imutils
 import cv2
-from lib import getQrcode
+from lib import getQrcode, getNumber
 
 # 七段數字
 DIGITS_LOOKUP = {
@@ -22,3 +22,4 @@ DIGITS_LOOKUP = {
 image = cv2.imread("img/ccc2.png")
  
 getQrcode(image)
+getNumber(image)
