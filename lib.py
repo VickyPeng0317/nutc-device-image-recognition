@@ -124,14 +124,21 @@ def getLCDNum(img):
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     cv2.imwrite('output/LCD/GaussianBlur.png', blurred)
     # 侵蝕
-    kernel = np.ones((3, 3), np.uint8) 
-    eroded = cv2.erode(blurred, kernel, iterations = 2)
+    erodedKernel = np.ones((3, 3), np.uint8) 
+    eroded = cv2.erode(blurred, erodedKernel, iterations = 2)
     cv2.imwrite('output/LCD/erode.png', eroded)
+    # 膨脹
+    dilatedKernel = np.ones((7, 7), np.uint8)
+    dilated = cv2.dilate(eroded, dilatedKernel)
+    cv2.imwrite('output/LCD/dilated.png', dilated)
     # 高斯模糊
-    blurred2 = cv2.GaussianBlur(eroded, (10, 10), 0)
-    cv2.imwrite('output/LCD/TEST.png', blurred2)
-    # cv2.imwrite('output/LCD/TEST.png', blurred[0:])
-
+    blurred = cv2.GaussianBlur(dilated, (5, 5), 0)
+    cv2.imwrite('output/LCD/dilated-GaussianBlur.png', blurred)
+    # 侵蝕
+    erodedKernel = np.ones((5, 5), np.uint8)
+    eroded = cv2.erode(blurred, erodedKernel)
+    cv2.imwrite('output/LCD/eroded-2.png', eroded)
     # # 二值
-    # thresh = cv2.threshold(eroded, 100, 255, cv2.THRESH_BINARY)[1]
+    # thresh = cv2.threshold(eroded, 50, 255, cv2.THRESH_BINARY)[1]
     # cv2.imwrite('output/LCD/TEST.png', thresh)
+
