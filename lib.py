@@ -1,3 +1,4 @@
+from re import X
 from imutils.perspective import four_point_transform
 from imutils import contours
 import imutils
@@ -98,8 +99,8 @@ def getNumber(image):
     # 取得最大面積索引
     lcdAreaIndex = np.argmax(allApproxArea, axis=0)
     # 切割 LCD 區塊
-    lcdAreaImg = four_point_transform(R, allApprox[lcdAreaIndex].reshape(4, 2))
-    cv2.imwrite(f'output/getNumber/R-LCD.png', lcdAreaImg)
+    lcdAreaImg = four_point_transform(image, allApprox[lcdAreaIndex].reshape(4, 2))
+    cv2.imwrite(f'output/getNumber/LCD.png', lcdAreaImg)
     # for c in arr:
     #     # 把圖切出來
     #     warped = four_point_transform(R, c.reshape(4, 2))
@@ -109,3 +110,28 @@ def getNumber(image):
         # # 二值化
         # thresh = cv2.threshold(warped, 100, 255, cv2.THRESH_BINARY)[1]
         # cv2.imwrite('output/QR/threshold-qrcode.png', thresh)
+    getLCDNum(lcdAreaImg)
+
+def getLCDNum(img):
+    # (x, y, z) = img.shape
+    # SBPImg = img[0:int(x/2),:,:]
+    # cv2.imwrite('output/LCD/TEST.png', )
+    # cv2.imwrite('output/LCD/TEST2.png', img[int(x/2):-1,:,:])
+    # 灰階
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    cv2.imwrite('output/LCD/gray.png', gray)
+    # 高斯模糊
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+    cv2.imwrite('output/LCD/GaussianBlur.png', blurred)
+    # 侵蝕
+    kernel = np.ones((3, 3), np.uint8) 
+    eroded = cv2.erode(blurred, kernel, iterations = 2)
+    cv2.imwrite('output/LCD/erode.png', eroded)
+    # 高斯模糊
+    blurred2 = cv2.GaussianBlur(eroded, (10, 10), 0)
+    cv2.imwrite('output/LCD/TEST.png', blurred2)
+    # cv2.imwrite('output/LCD/TEST.png', blurred[0:])
+
+    # # 二值
+    # thresh = cv2.threshold(eroded, 100, 255, cv2.THRESH_BINARY)[1]
+    # cv2.imwrite('output/LCD/TEST.png', thresh)
