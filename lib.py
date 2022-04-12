@@ -72,12 +72,12 @@ def getNumber(image):
     cv2.imwrite('output/getNumber/G.png', G)
     # 高斯模糊
     blurred = cv2.GaussianBlur(B, (5, 5), 0)
-    cv2.imwrite('output/getNumber/R_1-blurred.png', blurred)
+    cv2.imwrite('output/getNumber/B_1-blurred.png', blurred)
     # 邊緣檢測
     edged = cv2.Canny(blurred, 50, 200, 255)
-    cv2.imwrite('output/getNumber/R_2-Canny.png', edged)
+    cv2.imwrite('output/getNumber/B_2-Canny.png', edged)
 
-        # 在邊緣檢測map中取得輪廓
+    # 在邊緣檢測map中取得輪廓
     cnts = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
     # 依大小排序輪廓
@@ -99,8 +99,7 @@ def getNumber(image):
     lcdAreaIndex = np.argmax(allApproxArea, axis=0)
     # 切割 LCD 區塊
     lcdAreaImg = four_point_transform(R, allApprox[lcdAreaIndex].reshape(4, 2))
-    cv2.imwrite(f'output/getNumber/LCD.png', lcdAreaImg)
-
+    cv2.imwrite(f'output/getNumber/R-LCD.png', lcdAreaImg)
     # for c in arr:
     #     # 把圖切出來
     #     warped = four_point_transform(R, c.reshape(4, 2))
