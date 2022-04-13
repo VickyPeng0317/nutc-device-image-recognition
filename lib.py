@@ -200,7 +200,24 @@ def getLCDNum2(img):
         trans(lambda img: cv2.erode(img, np.ones((3, 3), np.uint8), iterations = 2)),
         trans(lambda img: sharpen(img, 120)),
         trans(lambda img: cv2.threshold(img, 25, 255, cv2.THRESH_BINARY_INV)[1]),
-        tap(lambda img: cv2.imshow('final', img)),
     )(img)
-    cv2.imshow('final2', final)
+
+    height = final.shape[0]
+
+    # Top
+    top = final[0:int(height/2), :]
+    top = pipe(
+        trans(lambda img: cv2.erode(img, np.ones((5, 5), np.uint8))),
+        trans(lambda img: cv2.dilate(img, np.ones((3, 3), np.uint8))),
+        tap(lambda img: cv2.imshow('top', img)),
+    )(top)
+
+    # Down
+    down = final[int(height/2):-1, :]
+    down = pipe(
+        trans(lambda img: cv2.morphologyEx(img, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (10, 10)))),
+        trans(lambda img: cv2.erode(img, np.ones((5, 5), np.uint8))),
+        tap(lambda img: cv2.imshow('down', img))
+    )(down)
+
     cv2.waitKey(0)
