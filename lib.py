@@ -211,9 +211,21 @@ def getLCDNum2(img):
     top = pipe(
         trans(lambda img: cv2.erode(img, np.ones((5, 5), np.uint8))),
         trans(lambda img: cv2.dilate(img, np.ones((3, 3), np.uint8))),
+        # trans(lambda img: cv2.Canny(img, 50, 200, 255)),
         tap(lambda img: cv2.imshow('top', img)),
     )(top)
+    contours, hierarchy = cv2.findContours(top.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    arr = np.array([cv2.boundingRect(c) for c in contours])
+    print(arr)
+    print(np.amax(arr, axis=2))
+    for c in contours:
+        # find bounding box coordinates
+        # 現計算出一個簡單的邊界框
+        x, y, w, h = cv2.boundingRect(c)
+        # 畫出矩形
+        cv2.rectangle(top, (70,51), (164, 110), (0, 255, 0), 2) 
 
+    cv2.imshow('top2', top)
     # 舒張壓
     down = lcd_pre[int(height/2):-1, :]
     down = pipe(
