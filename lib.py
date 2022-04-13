@@ -11,7 +11,6 @@ def pipe(*funcs):
         result = data
         for i in range(0, len(funcs)):
             result = funcs[i](result)
-        cv2.waitKey(0)
         return result
     return execute
 
@@ -189,17 +188,19 @@ def tap(func):
         return data
     return resFunc    
 
+def trans(func):
+    def resFunc(data):
+        return func(data)
+    return resFunc    
 
 def getLCDNum2(img):
-    pipe(
-        lambda img: cv2.cvtColor(img, cv2.COLOR_BGR2GRAY),
-        lambda img: cv2.GaussianBlur(img, (5, 5), 0),
-        lambda img: cv2.erode(img, np.ones((3, 3), np.uint8), iterations = 2),
-        # lambda img: cv2.dilate(img, np.ones((7, 7), np.uint8)),
-        # lambda img: cv2.GaussianBlur(img, (5, 5), 0),
-        # lambda img: cv2.erode(img, np.ones((5, 5), np.uint8)),
-        lambda img: sharpen(img, 120),
-        lambda img: cv2.threshold(img, 25, 255, cv2.THRESH_BINARY_INV)[1],
+    final = pipe(
+        trans(lambda img: cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)),
+        trans(lambda img: cv2.GaussianBlur(img, (5, 5), 0)),
+        trans(lambda img: cv2.erode(img, np.ones((3, 3), np.uint8), iterations = 2)),
+        trans(lambda img: sharpen(img, 120)),
+        trans(lambda img: cv2.threshold(img, 25, 255, cv2.THRESH_BINARY_INV)[1]),
         tap(lambda img: cv2.imshow('final', img)),
     )(img)
-    
+    cv2.imshow('final2', final)
+    cv2.waitKey(0)
