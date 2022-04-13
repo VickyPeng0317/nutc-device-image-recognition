@@ -194,7 +194,9 @@ def trans(func):
     return resFunc    
 
 def getLCDNum2(img):
-    final = pipe(
+    # LCD 前處理
+    lcd_pre = pipe(
+        tap(lambda img: cv2.imshow('origin', img)),
         trans(lambda img: cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)),
         trans(lambda img: cv2.GaussianBlur(img, (5, 5), 0)),
         trans(lambda img: cv2.erode(img, np.ones((3, 3), np.uint8), iterations = 2)),
@@ -202,18 +204,18 @@ def getLCDNum2(img):
         trans(lambda img: cv2.threshold(img, 25, 255, cv2.THRESH_BINARY_INV)[1]),
     )(img)
 
-    height = final.shape[0]
+    height = lcd_pre.shape[0]
 
-    # Top
-    top = final[0:int(height/2), :]
+    # 收縮壓
+    top = lcd_pre[0:int(height/2), :]
     top = pipe(
         trans(lambda img: cv2.erode(img, np.ones((5, 5), np.uint8))),
         trans(lambda img: cv2.dilate(img, np.ones((3, 3), np.uint8))),
         tap(lambda img: cv2.imshow('top', img)),
     )(top)
 
-    # Down
-    down = final[int(height/2):-1, :]
+    # 舒張壓
+    down = lcd_pre[int(height/2):-1, :]
     down = pipe(
         trans(lambda img: cv2.morphologyEx(img, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (10, 10)))),
         trans(lambda img: cv2.erode(img, np.ones((5, 5), np.uint8))),
