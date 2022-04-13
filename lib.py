@@ -1,3 +1,4 @@
+from ast import Lambda
 from re import X
 from imutils.perspective import four_point_transform
 from imutils import contours
@@ -10,6 +11,7 @@ def pipe(*funcs):
         result = data
         for i in range(0, len(funcs)):
             result = funcs[i](result)
+        cv2.waitKey(0)
         return result
     return execute
 
@@ -179,21 +181,25 @@ def getLCDNum(img):
     # morphologyExKernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (1, 2))
     # morphologyEx = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, morphologyExKernel)
     # cv2.imwrite('output/LCD/TEST.png', morphologyEx)
-def tapImWrite(img, path):
-    cv2.imwrite(path, img)
-    return img
+
+
+def tap(func):
+    def resFunc(data):
+        func(data)
+        return data
+    return resFunc    
 
 
 def getLCDNum2(img):
     pipe(
         lambda img: cv2.cvtColor(img, cv2.COLOR_BGR2GRAY),
-        lambda img: tapImWrite(img, 'output/LCD/pipe1.png'),
         lambda img: cv2.GaussianBlur(img, (5, 5), 0),
         lambda img: cv2.erode(img, np.ones((3, 3), np.uint8), iterations = 2),
-        lambda img: cv2.dilate(img, np.ones((7, 7), np.uint8)),
-        lambda img: cv2.GaussianBlur(img, (5, 5), 0),
-        lambda img: cv2.erode(img, np.ones((5, 5), np.uint8)),
+        # lambda img: cv2.dilate(img, np.ones((7, 7), np.uint8)),
+        # lambda img: cv2.GaussianBlur(img, (5, 5), 0),
+        # lambda img: cv2.erode(img, np.ones((5, 5), np.uint8)),
         lambda img: sharpen(img, 120),
-        lambda img: tapImWrite(img, 'output/LCD/pipe2.png'),
+        lambda img: cv2.threshold(img, 25, 255, cv2.THRESH_BINARY_INV)[1],
+        tap(lambda img: cv2.imshow('final', img)),
     )(img)
     
