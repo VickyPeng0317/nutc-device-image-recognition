@@ -5,6 +5,21 @@ import imutils
 import cv2
 import numpy as np
 
+def pipe(*funcs):
+    def execute(data):
+        result = data
+        for i in range(0, len(funcs)):
+            result = funcs[i](result)
+        return result
+    return execute
+
+def sharpen(img, sigma=100):    
+    # https://www.wongwonggoods.com/python/python_opencv/opencv-sharpen-images/
+    # sigma = 5、15、25
+    blur_img = cv2.GaussianBlur(img, (0, 0), sigma)
+    usm = cv2.addWeighted(img, 1.5, blur_img, -0.5, 0)
+    return usm
+
 def modify_contrast_and_brightness2(img, brightness=0 , contrast=100):
     # 上面做法的問題：有做到對比增強，白的的確更白了。
     # 但沒有實現「黑的更黑」的效果
@@ -110,10 +125,10 @@ def getNumber(image):
         # # 二值化
         # thresh = cv2.threshold(warped, 100, 255, cv2.THRESH_BINARY)[1]
         # cv2.imwrite('output/QR/threshold-qrcode.png', thresh)
-    getLCDNum(lcdAreaImg)
+    getLCDNum2(lcdAreaImg)
 
 def getLCDNum(img):
-    # (x, y, z) = img.shape
+    (x, y, z) = img.shape
     # SBPImg = img[0:int(x/2),:,:]
     # cv2.imwrite('output/LCD/TEST.png', )
     # cv2.imwrite('output/LCD/TEST2.png', img[int(x/2):-1,:,:])
@@ -138,7 +153,47 @@ def getLCDNum(img):
     erodedKernel = np.ones((5, 5), np.uint8)
     eroded = cv2.erode(blurred, erodedKernel)
     cv2.imwrite('output/LCD/eroded-2.png', eroded)
-    # # 二值
-    # thresh = cv2.threshold(eroded, 50, 255, cv2.THRESH_BINARY)[1]
-    # cv2.imwrite('output/LCD/TEST.png', thresh)
+    # 銳化
+    sharpened = sharpen(eroded, 120)
+    cv2.imwrite('output/LCD/TEST.png', sharpened)
+    # 二值
+    TOP = cv2.threshold(sharpened[0:int(x/2),:], 35, 255, cv2.THRESH_BINARY_INV)[1]
+    cv2.imwrite('output/LCD/TOP.png', TOP)
+    DOWN = cv2.threshold(sharpened[int(x/2):-1,:], 25, 255, cv2.THRESH_BINARY_INV)[1]
+    cv2.imwrite('output/LCD/DOWN.png', DOWN)
+    # print(thresh.shape)
+    # cnts = cv2.findContours(TOP.copy(), cv2.RETR_EXTERNAL,
+    #     cv2.CHAIN_APPROX_SIMPLE)
+    # cnts = imutils.grab_contours(cnts)
+    # digitCnts = []
+    # print(cnts[0])
+    # # loop over the digit area candidates
+    # for c in cnts:
+    #     # compute the bounding box of the contour
+    #     (x, y, w, h) = cv2.boundingRect(c)
+    #     # if the contour is sufficiently large, it must be a digit
+    #     if (h <= 70 and h >= 50):
+    #         digitCnts.append(c)
+    # print(len(digitCnts))
+    # # 型態
+    # morphologyExKernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (1, 2))
+    # morphologyEx = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, morphologyExKernel)
+    # cv2.imwrite('output/LCD/TEST.png', morphologyEx)
+def tapImWrite(img, path):
+    cv2.imwrite(path, img)
+    return img
 
+
+def getLCDNum2(img):
+    pipe(
+        lambda img: cv2.cvtColor(img, cv2.COLOR_BGR2GRAY),
+        lambda img: tapImWrite(img, 'output/LCD/pipe1.png'),
+        lambda img: cv2.GaussianBlur(img, (5, 5), 0),
+        lambda img: cv2.erode(img, np.ones((3, 3), np.uint8), iterations = 2),
+        lambda img: cv2.dilate(img, np.ones((7, 7), np.uint8)),
+        lambda img: cv2.GaussianBlur(img, (5, 5), 0),
+        lambda img: cv2.erode(img, np.ones((5, 5), np.uint8)),
+        lambda img: sharpen(img, 120),
+        lambda img: tapImWrite(img, 'output/LCD/pipe2.png'),
+    )(img)
+    
