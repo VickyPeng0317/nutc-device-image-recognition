@@ -4,10 +4,18 @@ import imutils
 import cv2
 from logic import getQrcodeImg, getLCDImg, getLCDNum
 from base import pipe, trans  
+from PIL import Image
+from pyzbar.pyzbar import decode
 
 # 讀取圖片
 image = cv2.imread("img/ccc2.png")
- 
+cv2.imshow("Origin", image)
+
+#https://stackoverflow.com/questions/27233351/how-to-decode-a-qr-code-image-in-preferably-pure-python
 qrcodeImg = getQrcodeImg(image)
+qrcodeData = decode(qrcodeImg)[0].data
+print(f'QRCode data:{qrcodeData}')
+
+cv2.imshow("QRCode", qrcodeImg)
 lcdImg = getLCDImg(image)
 num = getLCDNum(lcdImg)
