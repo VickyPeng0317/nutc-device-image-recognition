@@ -9,8 +9,5 @@ from base import pipe, trans
 image = cv2.imread("img/ccc2.png")
  
 qrcodeImg = getQrcodeImg(image)
-
-pipe(
-    trans(lambda img: getLCDImg(img)),
-    trans(lambda img: getLCDNum(img))
-)(image)
+lcdImg = getLCDImg(image)
+num = getLCDNum(lcdImg)

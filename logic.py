@@ -87,16 +87,46 @@ def getLCDImg(image):
     cv2.imwrite(f'output/getNumber/LCD.png', lcdAreaImg)
     return lcdAreaImg
 
+def getNumberImg(img):
+    # 找出輪廓
+    contours, hierarchy = cv2.findContours(img.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    # 取得外接矩形
+    boundingRectArr = np.array([cv2.boundingRect(c) for c in contours])
+
+    # 取得最左上方座標
+    [startX, startY, *_] = np.amin(boundingRectArr, axis=0)
+
+    # 取得最右下方座標
+    boundingRectEndPointArr = [[ar[0] + ar[2], ar[1] + ar[3]] for ar in boundingRectArr]
+    [endX, endY, *_] = np.amax(boundingRectEndPointArr, axis=0)
+
+    # 組出外接矩形4個座標， D 為矩形外擴閥值
+    D = 1.05
+    startX = int(startX / D)
+    startY = int(startY / D)
+    endX = int(endX * D)
+    endY = int(endY * D)
+    fourPoint = np.array([
+        [startX, startY],
+        [startX, endY],
+        [endX, endY],
+        [endX, startY],
+    ])
+
+    # 切割出數字圖像
+    numberImg = four_point_transform(img, fourPoint)
+    return numberImg
 
 def getLCDNum(img):
     # LCD 前處理
     lcd_pre = pipe(
-        tap(lambda img: cv2.imshow('origin', img)),
         trans(lambda img: cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)),
         trans(lambda img: cv2.GaussianBlur(img, (5, 5), 0)),
         trans(lambda img: cv2.erode(img, np.ones((3, 3), np.uint8), iterations = 2)),
         trans(lambda img: sharpen(img, 120)),
         trans(lambda img: cv2.threshold(img, 25, 255, cv2.THRESH_BINARY_INV)[1]),
+        # tap(lambda img: cv2.imshow('lcd_pre', img)),
     )(img)
 
     height = lcd_pre.shape[0]
@@ -106,28 +136,18 @@ def getLCDNum(img):
     top = pipe(
         trans(lambda img: cv2.erode(img, np.ones((5, 5), np.uint8))),
         trans(lambda img: cv2.dilate(img, np.ones((3, 3), np.uint8))),
-        # trans(lambda img: cv2.Canny(img, 50, 200, 255)),
-        tap(lambda img: cv2.imshow('top', img)),
+        # tap(lambda img: cv2.imshow('top', img)),
     )(top)
-    contours, hierarchy = cv2.findContours(top.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    # arr = np.array([cv2.boundingRect(c) for c in contours])
-    # print(arr)
-    cv2.rectangle(img, (0,0), (150, 150), (0, 255, 0), 2) 
-    # for c in contours:
-    #     # find bounding box coordinates
-    #     # 現計算出一個簡單的邊界框
-    #     x, y, w, h = cv2.boundingRect(c)
-    #     print(cv2.boundingRect(c))
-    #     # 畫出矩形
-    #     cv2.rectangle(img, (x,y), (x+w, y+h), (0, 255, 0), 2) 
-
+    topNumImg = getNumberImg(top)
+    cv2.imshow('top', topNumImg)
 
     # 舒張壓
-    # down = lcd_pre[int(height/2):-1, :]
-    # down = pipe(
-    #     trans(lambda img: cv2.morphologyEx(img, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (10, 10)))),
-    #     trans(lambda img: cv2.erode(img, np.ones((5, 5), np.uint8))),
-    #     # tap(lambda img: cv2.imshow('down', img))
-    # )(down)
-
+    down = lcd_pre[int(height/2):-1, :]
+    down = pipe(
+        trans(lambda img: cv2.morphologyEx(img, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (10, 10)))),
+        trans(lambda img: cv2.erode(img, np.ones((5, 5), np.uint8))),
+        # tap(lambda img: cv2.imshow('down', img))
+    )(down)
+    downNumImg = getNumberImg(down)
+    cv2.imshow('down', downNumImg)
     cv2.waitKey(0)
