@@ -47,7 +47,7 @@ def getQrcodeImg(image):
     # 二值化
     thresh = cv2.threshold(warped, 100, 255, cv2.THRESH_BINARY)[1]
     cv2.imwrite('output/QR/threshold-qrcode.png', thresh)
-    return thresh
+    return warped
 
 def getLCDImg(image):
     (B, R, G) = cv2.split(image)
@@ -87,7 +87,7 @@ def getLCDImg(image):
     cv2.imwrite(f'output/getNumber/LCD.png', lcdAreaImg)
     return lcdAreaImg
 
-def getNumberImg(img):
+def getNumberImgFourPoint(img):
     # 找出輪廓
     contours, hierarchy = cv2.findContours(img.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
@@ -113,10 +113,33 @@ def getNumberImg(img):
         [endX, endY],
         [endX, startY],
     ])
+    return fourPoint
 
-    # 切割出數字圖像
-    numberImg = four_point_transform(img, fourPoint)
-    return numberImg
+def getTopNum(lcd_origin, lcd_pre):
+    height = lcd_pre.shape[0]
+    top = lcd_pre[0:int(height/2), :]
+    top = pipe(
+        trans(lambda img: cv2.threshold(img, 25, 255, cv2.THRESH_BINARY_INV)[1]),
+        trans(lambda img: cv2.erode(img, np.ones((5, 5), np.uint8))),
+        trans(lambda img: cv2.dilate(img, np.ones((3, 3), np.uint8))),
+    )(top)
+    fourPoint = getNumberImgFourPoint(top)
+    rgb = four_point_transform(lcd_origin, fourPoint)
+    threshold = four_point_transform(top, fourPoint)
+    return [rgb, threshold]
+
+def getDownNum(lcd_origin, lcd_pre):
+    height = lcd_pre.shape[0]
+    down = lcd_pre[int(height/2):-1, :]
+    down = pipe(
+        trans(lambda img: cv2.threshold(img, 25, 255, cv2.THRESH_BINARY_INV)[1]),
+        trans(lambda img: cv2.morphologyEx(img, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (10, 10)))),
+        trans(lambda img: cv2.erode(img, np.ones((5, 5), np.uint8))),
+    )(down)
+    fourPoint = getNumberImgFourPoint(down)
+    rgb = four_point_transform(lcd_origin, np.array([[point[0], point[1] + int(height/2)] for point in fourPoint]))
+    threshold = four_point_transform(down, fourPoint)
+    return [rgb, threshold]
 
 def getLCDNum(img):
     # LCD 前處理
@@ -125,29 +148,27 @@ def getLCDNum(img):
         trans(lambda img: cv2.GaussianBlur(img, (5, 5), 0)),
         trans(lambda img: cv2.erode(img, np.ones((3, 3), np.uint8), iterations = 2)),
         trans(lambda img: sharpen(img, 120)),
-        trans(lambda img: cv2.threshold(img, 25, 255, cv2.THRESH_BINARY_INV)[1]),
-        # tap(lambda img: cv2.imshow('lcd_pre', img)),
     )(img)
 
-    height = lcd_pre.shape[0]
-
     # 收縮壓
-    top = lcd_pre[0:int(height/2), :]
-    top = pipe(
-        trans(lambda img: cv2.erode(img, np.ones((5, 5), np.uint8))),
-        trans(lambda img: cv2.dilate(img, np.ones((3, 3), np.uint8))),
-        # tap(lambda img: cv2.imshow('top', img)),
-    )(top)
-    topNumImg = getNumberImg(top)
-    cv2.imshow('top', topNumImg)
-
+    [topRGB, topTH] = getTopNum(img, lcd_pre)
+    cv2.imshow('topRGB',  topRGB)
+    cv2.imshow('topTH',  topTH)
+    contours, hierarchy = cv2.findContours(topTH.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    for cont in contours:
+        rect = cv2.boundingRect(cont)
+        print(rect)
+        cv2.imshow('asdsa', cv2.rectangle(topRGB, (3, 9, 13, 61), (0, 0, 255), 2, 8, 0))
+        cv2.imshow('asdsa', cv2.rectangle(topRGB, (44, 7, 13, 64), (0, 0, 255), 2, 8, 0))
+        cv2.imshow('asdsa', cv2.rectangle(topRGB, (58, 2, 41, 69), (0, 0, 255), 2, 8, 0))
+    print('\n')
     # 舒張壓
-    down = lcd_pre[int(height/2):-1, :]
-    down = pipe(
-        trans(lambda img: cv2.morphologyEx(img, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (10, 10)))),
-        trans(lambda img: cv2.erode(img, np.ones((5, 5), np.uint8))),
-        # tap(lambda img: cv2.imshow('down', img))
-    )(down)
-    downNumImg = getNumberImg(down)
-    cv2.imshow('down', downNumImg)
+    [downRGB, downTH] = getDownNum(img, lcd_pre)
+    cv2.imshow('downRGB',  downRGB)
+    cv2.imshow('downTH',  downTH)
+    contours, hierarchy = cv2.findContours(downTH.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    for cont in contours:
+        rect = cv2.boundingRect(cont)
+        print(rect)
+        cv2.imshow('asdsabbb', cv2.rectangle(downRGB, rect, (0, 0, 255), 2, 8, 0))
     cv2.waitKey(0)
