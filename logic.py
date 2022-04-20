@@ -197,9 +197,46 @@ def getNumImgArr(thImg):
     # 回傳數字圖像
     return [four_point_transform(thImg, fourPoint) for fourPoint in boundingRectFourPoint]
 
-# def sevenDisplayNum(img):
-
-#     return 0
+def sevenDisplayNum(img):
+    # 太窄代表是 1
+    [h, w] = img.shape
+    if (w < 20) :
+        return '1'
+    # 定義數值陣列
+    DIGITS_LOOKUP = {
+        (1, 1, 1, 0, 1, 1, 1): 0,
+        (0, 0, 1, 0, 0, 1, 0): 1,
+        (1, 0, 1, 1, 1, 1, 0): 2,
+        (1, 0, 1, 1, 0, 1, 1): 3,
+        (0, 1, 1, 1, 0, 1, 0): 4,
+        (1, 1, 0, 1, 0, 1, 1): 5,
+        (1, 1, 0, 1, 1, 1, 1): 6,
+        (1, 0, 1, 0, 0, 1, 0): 7,
+        (1, 1, 1, 1, 1, 1, 1): 8,
+        (1, 1, 1, 1, 0, 1, 1): 9
+    }
+    www = int(w * 0.25)
+    segments = [
+        ((0, 0), (w, www)),               # 上
+        ((0, 0), (www, h // 2)),           # 左上
+        ((w - www, 0), (w, h // 2)),          # 右上
+        ((0, (h // 2) - (www//2)) , (w, (h // 2) + (www//2))), # 中间
+        ((0, h // 2), (www, h)),            # 左下
+        ((w - www, h // 2), (w, h)),          # 右下
+        ((0, h - www), (w, h))              # 下
+    ]
+    on = [0] * len(segments)
+     # 循环遍历数码管中的每一段
+    for (i, ((xA, yA), (xB, yB))) in enumerate(segments): # 检测分割后的ROI区域，并统计分割图中的阈值像素点
+        segROI = img[yA:yB, xA:xB]
+        total = cv2.countNonZero(segROI)
+        area = (xB - xA) * (yB - yA)
+        # 如果非零区域的个数大于整个区域的一半，则认为该段是亮的
+        if total / float(area) > 0.3:
+            on[i]= 1
+    # # 进行数字查询并显示结果
+    digit = DIGITS_LOOKUP[tuple(on)]
+    return str(digit)
 
 def getLCDNum(img):
     # LCD 前處理
@@ -213,17 +250,16 @@ def getLCDNum(img):
     # 收縮壓
     [topRGB, topTH] = getTopImg(img, lcd_pre)
     topNumImgArr = getNumImgArr(topTH)
-    # topAllNumber = [sevenDisplayNum(numImg) for numImg in topNumImgArr]
-    # print(topAllNumber)
+    topAllNumber = [sevenDisplayNum(numImg) for numImg in topNumImgArr]
+    cv2.imshow('topRGB', topRGB)
+    print(f'收縮壓: {"".join(topAllNumber)}')
 
     # 舒張壓
     [downRGB, downTH] = getDownImg(img, lcd_pre)
     downNumImgArr = getNumImgArr(downTH)
-
-    # cv2.imshow('asdsa', cv2.rectangle(topRGB, (3, 9, 13, 61), (0, 0, 255), 2, 8, 0))
-    # cv2.imshow('asdsa', cv2.rectangle(topRGB, (44, 7, 13, 64), (0, 0, 255), 2, 8, 0))
-    # cv2.imshow('asdsa', cv2.rectangle(topRGB, (58, 2, 41, 69), (0, 0, 255), 2, 8, 0))
-
+    downAllNumber = [sevenDisplayNum(numImg) for numImg in downNumImgArr]
+    cv2.imshow('downRGB', downRGB)
+    print(f'舒張壓: {"".join(downAllNumber)}')
 
     cv2.waitKey(0)
 
