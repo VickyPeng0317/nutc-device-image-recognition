@@ -43,10 +43,6 @@ def getQrcodeImg(image):
     # 把圖切出來
     warped = four_point_transform(gray, displayCnt.reshape(4, 2))
     cv2.imwrite('output/QR/origin-qrcode.png', warped)
-
-    # 二值化
-    thresh = cv2.threshold(warped, 100, 255, cv2.THRESH_BINARY)[1]
-    cv2.imwrite('output/QR/threshold-qrcode.png', thresh)
     return warped
 
 def getLCDImg(image):
@@ -87,6 +83,20 @@ def getLCDImg(image):
     cv2.imwrite(f'output/getNumber/LCD.png', lcdAreaImg)
     return lcdAreaImg
 
+def boundingRectToFourPoint(rect, D = 1):
+    x, y, w, h = rect
+    startX = int(x / D)
+    startY = int(y / D)
+    endX = int((x + w) * D)
+    endY = int((y + h) * D)
+    fourPoint = np.array([
+        [startX, startY],
+        [startX, endY],
+        [endX, endY],
+        [endX, startY],
+    ])
+    return fourPoint
+
 def getNumberImgFourPoint(img):
     # 找出輪廓
     contours, hierarchy = cv2.findContours(img.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -115,7 +125,7 @@ def getNumberImgFourPoint(img):
     ])
     return fourPoint
 
-def getTopNum(lcd_origin, lcd_pre):
+def getTopImg(lcd_origin, lcd_pre):
     height = lcd_pre.shape[0]
     top = lcd_pre[0:int(height/2), :]
     top = pipe(
@@ -128,7 +138,7 @@ def getTopNum(lcd_origin, lcd_pre):
     threshold = four_point_transform(top, fourPoint)
     return [rgb, threshold]
 
-def getDownNum(lcd_origin, lcd_pre):
+def getDownImg(lcd_origin, lcd_pre):
     height = lcd_pre.shape[0]
     down = lcd_pre[int(height/2):-1, :]
     down = pipe(
@@ -141,6 +151,56 @@ def getDownNum(lcd_origin, lcd_pre):
     threshold = four_point_transform(down, fourPoint)
     return [rgb, threshold]
 
+def getNumImgArr(thImg):
+    # 找出 boundingRect 並依 X 座標值由小排到大
+    contours, hierarchy = cv2.findContours(thImg.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    boundingRectArr = np.array([cv2.boundingRect(c) for c in contours])
+    boundingRectArr = boundingRectArr[boundingRectArr[:, 0].argsort()]
+    # 於 Index 0 新增 isSelect flag 值
+    boundingRectLogicArr = np.array([[0, *rect] for rect in boundingRectArr])
+    # 找出鄰近 boundingRect
+    boundingRectGroup = []
+    for item in boundingRectLogicArr:
+        # 取值
+        [isSelect, *rect] = item
+        # 已被挑選就離開
+        if isSelect == 1:
+            continue
+        # 取得 x 座標
+        startX = rect[0]
+        # 找出鄰近 rect index， D為區間值
+        D = 10
+        groupIndex = np.where((boundingRectLogicArr[:, 1] >= startX) & (boundingRectLogicArr[:, 1] <= (startX+D)))[0]
+        # 儲存鄰近 rect group 
+        boundingRectGroup.append(boundingRectArr[groupIndex])
+        # 將已選取的 rect 之 isSelect flag 設為 1
+        for index in groupIndex:
+            boundingRectLogicArr[index][0] = 1
+    # 找出各群組之外接矩形座標
+    boundingRectFourPoint = []
+    for item in boundingRectGroup:
+        # 取得最左上方座標
+        [startX, startY, *_] = np.amin(item, axis=0)
+
+        # 取得最右下方座標
+        boundingRectEndPointArr = [[ar[0] + ar[2], ar[1] + ar[3]] for ar in item]
+        [endX, endY, *_] = np.amax(boundingRectEndPointArr, axis=0)
+
+        # 組出外接矩形4個座標， D 為矩形外擴閥值
+        fourPoint = np.array([
+            [startX, startY],
+            [startX, endY],
+            [endX, endY],
+            [endX, startY],
+        ])
+        boundingRectFourPoint.append(fourPoint)
+    # 回傳數字圖像
+    return [four_point_transform(thImg, fourPoint) for fourPoint in boundingRectFourPoint]
+
+# def sevenDisplayNum(img):
+
+#     return 0
+
 def getLCDNum(img):
     # LCD 前處理
     lcd_pre = pipe(
@@ -151,24 +211,19 @@ def getLCDNum(img):
     )(img)
 
     # 收縮壓
-    [topRGB, topTH] = getTopNum(img, lcd_pre)
-    cv2.imshow('topRGB',  topRGB)
-    cv2.imshow('topTH',  topTH)
-    contours, hierarchy = cv2.findContours(topTH.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    for cont in contours:
-        rect = cv2.boundingRect(cont)
-        print(rect)
-        cv2.imshow('asdsa', cv2.rectangle(topRGB, (3, 9, 13, 61), (0, 0, 255), 2, 8, 0))
-        cv2.imshow('asdsa', cv2.rectangle(topRGB, (44, 7, 13, 64), (0, 0, 255), 2, 8, 0))
-        cv2.imshow('asdsa', cv2.rectangle(topRGB, (58, 2, 41, 69), (0, 0, 255), 2, 8, 0))
-    print('\n')
+    [topRGB, topTH] = getTopImg(img, lcd_pre)
+    topNumImgArr = getNumImgArr(topTH)
+    # topAllNumber = [sevenDisplayNum(numImg) for numImg in topNumImgArr]
+    # print(topAllNumber)
+
     # 舒張壓
-    [downRGB, downTH] = getDownNum(img, lcd_pre)
-    cv2.imshow('downRGB',  downRGB)
-    cv2.imshow('downTH',  downTH)
-    contours, hierarchy = cv2.findContours(downTH.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    for cont in contours:
-        rect = cv2.boundingRect(cont)
-        print(rect)
-        cv2.imshow('asdsabbb', cv2.rectangle(downRGB, rect, (0, 0, 255), 2, 8, 0))
+    [downRGB, downTH] = getDownImg(img, lcd_pre)
+    downNumImgArr = getNumImgArr(downTH)
+
+    # cv2.imshow('asdsa', cv2.rectangle(topRGB, (3, 9, 13, 61), (0, 0, 255), 2, 8, 0))
+    # cv2.imshow('asdsa', cv2.rectangle(topRGB, (44, 7, 13, 64), (0, 0, 255), 2, 8, 0))
+    # cv2.imshow('asdsa', cv2.rectangle(topRGB, (58, 2, 41, 69), (0, 0, 255), 2, 8, 0))
+
+
     cv2.waitKey(0)
+
