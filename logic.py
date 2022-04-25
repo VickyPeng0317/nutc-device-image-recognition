@@ -11,17 +11,15 @@ from lib import sharpen, modify_contrast_and_brightness2
 def getQrcodeImg(image):
     # resize 500
     image = imutils.resize(image, height=500)
+    height = image.shape[0]
+    image = image[int(height/2):-1, :]
 
     # 灰階
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    cv2.imwrite('output/QR/1-cvtColor.png', gray)
-    # 高斯模糊
-    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    cv2.imwrite('output/QR/2-GaussianBlur.png', blurred)
+
     # 邊緣檢測
-    edged = cv2.Canny(blurred, 50, 200, 255)
-    cv2.imwrite('output/QR/3-Canny.png', edged)
-    
+    edged = cv2.Canny(gray, 50, 200, 255)
+
     # 在邊緣檢測map中取得輪廓
     cnts = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = imutils.grab_contours(cnts)
@@ -34,16 +32,21 @@ def getQrcodeImg(image):
         # 對輪廓進行相似比對
         peri = cv2.arcLength(c, True)
         approx = cv2.approxPolyDP(c, 0.02 * peri, True)
-    
+        weight = cv2.boundingRect(c)[2]
+
         # 找出有四個頂點的輪廓
-        if len(approx) == 4:
+        if len(approx) == 4 and weight > 80:
             displayCnt = approx
             break
     
     # 把圖切出來
     warped = four_point_transform(gray, displayCnt.reshape(4, 2))
     cv2.imwrite('output/QR/origin-qrcode.png', warped)
-    return warped
+    # 銳化
+    blur_img = cv2.GaussianBlur(warped, (0, 0), 150)
+    usm = cv2.addWeighted(warped, 1.5, blur_img, -0.5, 0)
+
+    return usm
 
 def getLCDImg(image):
     (B, R, G) = cv2.split(image)
