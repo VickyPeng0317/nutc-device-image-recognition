@@ -125,16 +125,23 @@ def getNumberImgFourPoint(img):
     ])
     return fourPoint
 
-def getTopImg(lcd_origin, lcd_pre):
-    height = lcd_pre.shape[0]
-    top = lcd_pre[0:int(height/2), :]
+def getTopImg(lcd_origin):
+    lcd_origin_top = lcd_origin[0:int(lcd_origin.shape[0]/2), :]
+    orgin_top = lcd_origin_top[int(lcd_origin_top.shape[0]/3):-1, :]
     top = pipe(
-        trans(lambda img: cv2.threshold(img, 25, 255, cv2.THRESH_BINARY_INV)[1]),
-        trans(lambda img: cv2.erode(img, np.ones((5, 5), np.uint8))),
+        # trans(lambda img: cv2.threshold(img, 25, 255, cv2.THRESH_BINARY_INV)[1]),
+        tap(lambda img: cv2.imshow('test', img)),
+        trans(lambda img: cv2.erode(img, np.ones((3, 3), np.uint8))),
         trans(lambda img: cv2.dilate(img, np.ones((3, 3), np.uint8))),
-    )(top)
+        trans(lambda img: cv2.erode(img, np.ones((3, 3), np.uint8))),
+        trans(lambda img: cv2.dilate(img, np.ones((3, 3), np.uint8))),
+        trans(lambda img: cv2.erode(img, np.ones((3, 3), np.uint8))),
+        trans(lambda img: cv2.dilate(img, np.ones((3, 3), np.uint8))),
+        trans(lambda img: cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)),
+        trans(lambda img: cv2.threshold(img, 50, 255, cv2.THRESH_BINARY_INV)[1]),
+    )(orgin_top)
     fourPoint = getNumberImgFourPoint(top)
-    rgb = four_point_transform(lcd_origin, fourPoint)
+    rgb = four_point_transform(orgin_top, fourPoint)
     threshold = four_point_transform(top, fourPoint)
     return [rgb, threshold]
 
@@ -193,7 +200,9 @@ def getNumImgArr(thImg):
             [endX, endY],
             [endX, startY],
         ])
-        boundingRectFourPoint.append(fourPoint)
+        # 忽略過小
+        if (endX-startX) * (endY-startY) > 100:
+            boundingRectFourPoint.append(fourPoint)
     # 回傳數字圖像
     return [four_point_transform(thImg, fourPoint) for fourPoint in boundingRectFourPoint]
 
@@ -206,7 +215,7 @@ def sevenDisplayNum(img):
     DIGITS_LOOKUP = {
         (1, 1, 1, 0, 1, 1, 1): 0,
         (0, 0, 1, 0, 0, 1, 0): 1,
-        (1, 0, 1, 1, 1, 1, 0): 2,
+        (1, 0, 1, 1, 1, 0, 1): 2,
         (1, 0, 1, 1, 0, 1, 1): 3,
         (0, 1, 1, 1, 0, 1, 0): 4,
         (1, 1, 0, 1, 0, 1, 1): 5,
@@ -232,34 +241,31 @@ def sevenDisplayNum(img):
         total = cv2.countNonZero(segROI)
         area = (xB - xA) * (yB - yA)
         # 如果非零区域的个数大于整个区域的一半，则认为该段是亮的
-        if total / float(area) > 0.3:
+        if total / float(area) > 0.4:
             on[i]= 1
     # # 进行数字查询并显示结果
-    digit = DIGITS_LOOKUP[tuple(on)]
+    try:
+        # print(on)
+        digit = DIGITS_LOOKUP[tuple(on)]
+    except:
+        # print(on)
+        digit = 'x'
     return str(digit)
 
 def getLCDNum(img):
-    # LCD 前處理
-    lcd_pre = pipe(
-        trans(lambda img: cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)),
-        trans(lambda img: cv2.GaussianBlur(img, (5, 5), 0)),
-        trans(lambda img: cv2.erode(img, np.ones((3, 3), np.uint8), iterations = 2)),
-        trans(lambda img: sharpen(img, 120)),
-    )(img)
-
     # 收縮壓
-    [topRGB, topTH] = getTopImg(img, lcd_pre)
+    [topRGB, topTH] = getTopImg(img)
     topNumImgArr = getNumImgArr(topTH)
+    # for i in range(len(topNumImgArr)):
+    #     cv2.imshow(f'Num-{i+1}', topNumImgArr[i])
     topAllNumber = [sevenDisplayNum(numImg) for numImg in topNumImgArr]
-    cv2.imshow('topRGB', topRGB)
-    print(f'收縮壓: {"".join(topAllNumber)}')
-
+    return "".join(topAllNumber)
     # 舒張壓
-    [downRGB, downTH] = getDownImg(img, lcd_pre)
-    downNumImgArr = getNumImgArr(downTH)
-    downAllNumber = [sevenDisplayNum(numImg) for numImg in downNumImgArr]
-    cv2.imshow('downRGB', downRGB)
-    print(f'舒張壓: {"".join(downAllNumber)}')
+    # [downRGB, downTH] = getDownImg(img, lcd_pre)
+    # downNumImgArr = getNumImgArr(downTH)
+    # downAllNumber = [sevenDisplayNum(numImg) for numImg in downNumImgArr]
+    # cv2.imshow('downRGB', downRGB)
+    # print(f'舒張壓: {"".join(downAllNumber)}')
 
     cv2.waitKey(0)
 
