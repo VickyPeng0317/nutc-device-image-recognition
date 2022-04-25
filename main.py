@@ -11,7 +11,7 @@ import shutil
 
 
 # 讀取圖片
-image = cv2.imread("img/ccc2.png")
+image = cv2.imread("img/1.png")
 
 #https://stackoverflow.com/questions/27233351/how-to-decode-a-qr-code-image-in-preferably-pure-python
 qrcodeImg = getQrcodeImg(image)
