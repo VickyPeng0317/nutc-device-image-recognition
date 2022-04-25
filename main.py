@@ -21,7 +21,6 @@ print(f'QRCode data:{qrcodeData}')
 lcdImg = getLCDImg(image)
 num = getLCDNum(lcdImg)
 
-
 def test_qrcode(count = 50):
     shutil.rmtree('output/FAILQR')
     os.mkdir('output/FAILQR')
@@ -40,3 +39,8 @@ def test_qrcode(count = 50):
         
     print(f'success: {len(success)}, fail: {len(fail)}')
     print(fail)
+
+def test_getLCDImg(count = 50):
+    for i in range(50):
+        lcdImg = getLCDImg(cv2.imread(f"img/{str(i+1)}.png"))
+        print(f'{i+1}: {getLCDNum(lcdImg)}')
