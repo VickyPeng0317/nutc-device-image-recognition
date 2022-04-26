@@ -41,12 +41,14 @@ def getQrcodeImg(image):
     
     # 把圖切出來
     warped = four_point_transform(gray, displayCnt.reshape(4, 2))
-    cv2.imwrite('output/QR/origin-qrcode.png', warped)
+    # cv2.imwrite('output/QR/origin-qrcode.png', warped)
     # 銳化
-    blur_img = cv2.GaussianBlur(warped, (0, 0), 150)
-    usm = cv2.addWeighted(warped, 1.5, blur_img, -0.5, 0)
-
-    return usm
+    # blur_img = cv2.GaussianBlur(warped, (0, 0), 150)
+    # usm = cv2.addWeighted(warped, 1.5, blur_img, -0.5, 0)
+    data= warped.reshape(1, warped.shape[0] * warped.shape[1])[0]
+    mean = sum(data)/len(data)
+    # print(int(mean))
+    return cv2.threshold(warped, int(mean*0.895), 255, cv2.THRESH_BINARY)[1]
 
 def getLCDImg(image):
     (B, R, G) = cv2.split(image)
