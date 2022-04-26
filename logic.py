@@ -166,7 +166,7 @@ def getDownImg(lcd_origin):
     threshold = four_point_transform(down, fourPoint)
     return [rgb, threshold]
 
-def getNumImgArr(thImg):
+def getNumImgArr(thImg, D = 10):
     # 找出 boundingRect 並依 X 座標值由小排到大
     contours, hierarchy = cv2.findContours(thImg.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     boundingRectArr = np.array([cv2.boundingRect(c) for c in contours])
@@ -184,7 +184,6 @@ def getNumImgArr(thImg):
         # 取得 x 座標
         startX = rect[0]
         # 找出鄰近 rect index， D為區間值
-        D = 10
         groupIndex = np.where((boundingRectLogicArr[:, 1] >= startX) & (boundingRectLogicArr[:, 1] <= (startX+D)))[0]
         # 儲存鄰近 rect group 
         boundingRectGroup.append(boundingRectArr[groupIndex])
@@ -249,7 +248,11 @@ def sevenDisplayNum(img):
         total = cv2.countNonZero(segROI)
         area = (xB - xA) * (yB - yA)
         # 如果非零区域的个数大于整个区域的一半，则认为该段是亮的
-        if total / float(area) > 0.4:
+        matchPersent = 0.4
+        # 右下比較細，需調低
+        if i == 5:
+            matchPersent = 0.25
+        if total / float(area) > matchPersent:
             on[i]= 1
     # # 进行数字查询并显示结果
     try:
@@ -263,7 +266,7 @@ def sevenDisplayNum(img):
 def getLCDTopNum(lcd_img):
     # 收縮壓
     [topRGB, topTH] = getTopImg(lcd_img)
-    topNumImgArr = getNumImgArr(topTH)
+    topNumImgArr = getNumImgArr(topTH, D = 10)
     # # for i in range(len(topNumImgArr)):
     # #     cv2.imshow(f'Num-{i+1}', topNumImgArr[i])
     topAllNumber = [sevenDisplayNum(numImg) for numImg in topNumImgArr]
@@ -272,8 +275,10 @@ def getLCDTopNum(lcd_img):
 def getLCDDownNum(lcd_img):
     # 舒張壓
     [downRGB, downTH] = getDownImg(lcd_img)
-    downNumImgArr = getNumImgArr(downTH)
+    downNumImgArr = getNumImgArr(downTH, D = 20)
     # for i in range(len(downNumImgArr)):
     #     cv2.imshow(f'Num-{i+1}', downNumImgArr[i])
     downAllNumber = [sevenDisplayNum(numImg) for numImg in downNumImgArr]
     return "".join(downAllNumber)
+    # # cv2.imshow(f'testasdsa', downNumImgArr[0])
+    # return sevenDisplayNum(downNumImgArr[0])
