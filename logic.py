@@ -260,24 +260,20 @@ def sevenDisplayNum(img):
         digit = 'x'
     return str(digit)
 
-def getLCDNum(img):
+def getLCDTopNum(lcd_img):
     # 收縮壓
-    [topRGB, topTH] = getTopImg(img)
+    [topRGB, topTH] = getTopImg(lcd_img)
     topNumImgArr = getNumImgArr(topTH)
     # # for i in range(len(topNumImgArr)):
     # #     cv2.imshow(f'Num-{i+1}', topNumImgArr[i])
     topAllNumber = [sevenDisplayNum(numImg) for numImg in topNumImgArr]
-    
+    return "".join(topAllNumber)
+
+def getLCDDownNum(lcd_img):
     # 舒張壓
-    [downRGB, downTH] = getDownImg(img)
+    [downRGB, downTH] = getDownImg(lcd_img)
     downNumImgArr = getNumImgArr(downTH)
     # for i in range(len(downNumImgArr)):
     #     cv2.imshow(f'Num-{i+1}', downNumImgArr[i])
     downAllNumber = [sevenDisplayNum(numImg) for numImg in downNumImgArr]
-    # cv2.waitKey(0)
-    return "".join(topAllNumber)
-
-
-
-    # return ["".join(topAllNumber)]
-
+    return "".join(downAllNumber)
