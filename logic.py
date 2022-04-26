@@ -130,7 +130,6 @@ def getTopImg(lcd_origin):
     orgin_top = lcd_origin_top[int(lcd_origin_top.shape[0]/3):-1, :]
     top = pipe(
         # trans(lambda img: cv2.threshold(img, 25, 255, cv2.THRESH_BINARY_INV)[1]),
-        tap(lambda img: cv2.imshow('test', img)),
         trans(lambda img: cv2.erode(img, np.ones((3, 3), np.uint8))),
         trans(lambda img: cv2.dilate(img, np.ones((3, 3), np.uint8))),
         trans(lambda img: cv2.erode(img, np.ones((3, 3), np.uint8))),
@@ -145,16 +144,25 @@ def getTopImg(lcd_origin):
     threshold = four_point_transform(top, fourPoint)
     return [rgb, threshold]
 
-def getDownImg(lcd_origin, lcd_pre):
-    height = lcd_pre.shape[0]
-    down = lcd_pre[int(height/2):-1, :]
+def getDownImg(lcd_origin):
+    lcd_origin_down = lcd_origin[int(lcd_origin.shape[0]/2):-1, :]
+    orgin_down = lcd_origin_down[0:int(lcd_origin_down.shape[0]*2/3), :]
     down = pipe(
-        trans(lambda img: cv2.threshold(img, 25, 255, cv2.THRESH_BINARY_INV)[1]),
-        trans(lambda img: cv2.morphologyEx(img, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (10, 10)))),
-        trans(lambda img: cv2.erode(img, np.ones((5, 5), np.uint8))),
-    )(down)
+        # tap(lambda img: cv2.imshow('getDownImg', img)),
+        trans(lambda img: cv2.erode(img, np.ones((3, 3), np.uint8))),
+        trans(lambda img: cv2.dilate(img, np.ones((3, 3), np.uint8))),
+        trans(lambda img: cv2.erode(img, np.ones((3, 3), np.uint8))),
+        trans(lambda img: cv2.dilate(img, np.ones((3, 3), np.uint8))),
+        trans(lambda img: cv2.erode(img, np.ones((3, 3), np.uint8))),
+        trans(lambda img: cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)),
+        trans(lambda img: cv2.GaussianBlur(img, (5, 5), 150)),
+        trans(lambda img: cv2.threshold(img, 35, 255, cv2.THRESH_BINARY_INV)[1]),
+        # trans(lambda img: cv2.threshold(img, 25, 255, cv2.THRESH_BINARY_INV)[1]),
+        # trans(lambda img: cv2.morphologyEx(img, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (10, 10)))),
+        # trans(lambda img: cv2.erode(img, np.ones((5, 5), np.uint8))),
+    )(orgin_down)
     fourPoint = getNumberImgFourPoint(down)
-    rgb = four_point_transform(lcd_origin, np.array([[point[0], point[1] + int(height/2)] for point in fourPoint]))
+    rgb = four_point_transform(orgin_down, fourPoint)
     threshold = four_point_transform(down, fourPoint)
     return [rgb, threshold]
 
@@ -201,7 +209,7 @@ def getNumImgArr(thImg):
             [endX, startY],
         ])
         # 忽略過小
-        if (endX-startX) * (endY-startY) > 100:
+        if (endX-startX) * (endY-startY) > 500:
             boundingRectFourPoint.append(fourPoint)
     # 回傳數字圖像
     return [four_point_transform(thImg, fourPoint) for fourPoint in boundingRectFourPoint]
@@ -256,16 +264,20 @@ def getLCDNum(img):
     # 收縮壓
     [topRGB, topTH] = getTopImg(img)
     topNumImgArr = getNumImgArr(topTH)
-    # for i in range(len(topNumImgArr)):
-    #     cv2.imshow(f'Num-{i+1}', topNumImgArr[i])
+    # # for i in range(len(topNumImgArr)):
+    # #     cv2.imshow(f'Num-{i+1}', topNumImgArr[i])
     topAllNumber = [sevenDisplayNum(numImg) for numImg in topNumImgArr]
-    return "".join(topAllNumber)
+    
     # 舒張壓
-    # [downRGB, downTH] = getDownImg(img, lcd_pre)
-    # downNumImgArr = getNumImgArr(downTH)
-    # downAllNumber = [sevenDisplayNum(numImg) for numImg in downNumImgArr]
-    # cv2.imshow('downRGB', downRGB)
-    # print(f'舒張壓: {"".join(downAllNumber)}')
+    [downRGB, downTH] = getDownImg(img)
+    downNumImgArr = getNumImgArr(downTH)
+    # for i in range(len(downNumImgArr)):
+    #     cv2.imshow(f'Num-{i+1}', downNumImgArr[i])
+    downAllNumber = [sevenDisplayNum(numImg) for numImg in downNumImgArr]
+    # cv2.waitKey(0)
+    return "".join(topAllNumber)
 
-    cv2.waitKey(0)
+
+
+    # return ["".join(topAllNumber)]
 
