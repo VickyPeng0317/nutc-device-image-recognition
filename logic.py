@@ -9,16 +9,22 @@ from base import trans, tap, pipe
 from lib import sharpen, modify_contrast_and_brightness2
 
 def getQrcodeImg(image):
+    # cv2.imshow('image', image)
     # resize 500
     image = imutils.resize(image, height=500)
     height = image.shape[0]
     image = image[int(height/2):-1, :]
 
+    # cv2.imshow('1', image)
+
     # 灰階
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
+    # cv2.imshow('2', gray)
+
     # 邊緣檢測
     edged = cv2.Canny(gray, 50, 200, 255)
+    # cv2.imshow('3', edged)
 
     # 在邊緣檢測map中取得輪廓
     cnts = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -41,6 +47,7 @@ def getQrcodeImg(image):
     
     # 把圖切出來
     warped = four_point_transform(gray, displayCnt.reshape(4, 2))
+    # cv2.imshow('4', warped)
     # cv2.imwrite('output/QR/origin-qrcode.png', warped)
     # 銳化
     # blur_img = cv2.GaussianBlur(warped, (0, 0), 150)
@@ -52,15 +59,20 @@ def getQrcodeImg(image):
 
 def getLCDImg(image):
     (B, R, G) = cv2.split(image)
+    # cv2.imshow('B', B)
+    # cv2.imshow('R', R)
+    # cv2.imshow('G', G)
     # cv2.imwrite('output/getNumber/ORIGIN.png', image)
     # cv2.imwrite('output/getNumber/B.png', B)
     # cv2.imwrite('output/getNumber/R.png', R)
     # cv2.imwrite('output/getNumber/G.png', G)
     # 高斯模糊
-    blurred = cv2.GaussianBlur(B, (3, 3), 0)
+    # blurred = cv2.GaussianBlur(B, (3, 3), 0)
+    # cv2.imshow('2', blurred)
     # cv2.imwrite('output/getNumber/B_1-blurred.png', blurred)
     # 邊緣檢測
-    edged = cv2.Canny(blurred, 50, 200, 255)
+    edged = cv2.Canny(B, 50, 200, 255)
+    # cv2.imshow('2', edged)
     # cv2.imwrite('output/getNumber/B_2-Canny.png', edged)
 
     # 在邊緣檢測map中取得輪廓
@@ -82,6 +94,7 @@ def getLCDImg(image):
 
     # 切割 LCD 區塊
     lcdAreaImg = four_point_transform(image, boundingRectToFourPoint(transRect))
+    # cv2.imshow('lcd', lcdAreaImg)
     return lcdAreaImg
 
 
@@ -99,12 +112,17 @@ def boundingRectToFourPoint(rect, D = 1):
     ])
     return fourPoint
 
-def getNumberImgFourPoint(img):
+def getNumberImgFourPoint(img, orgin):
     # 找出輪廓
     contours, hierarchy = cv2.findContours(img.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
     # 取得外接矩形
     boundingRectArr = np.array([cv2.boundingRect(c) for c in contours])
+
+    # i = 1
+    # for rect in boundingRectArr:
+    #     x,y,w,h = rect
+    #     cv2.imshow(f'Rect{1}', cv2.rectangle(orgin,(x,y),(x+w,y+h),(0,255,0),2))
 
     # 取得最左上方座標
     [startX, startY, *_] = np.amin(boundingRectArr, axis=0)
@@ -125,25 +143,32 @@ def getNumberImgFourPoint(img):
         [endX, endY],
         [endX, startY],
     ])
+    # cv2.imshow(f'Rectasdas', cv2.rectangle(orgin,(startX,startY),(endX,endY),(0,255,0),2))
     return fourPoint
 
 def getTopImg(lcd_origin):
     lcd_origin_top = lcd_origin[0:int(lcd_origin.shape[0]/2), :]
     orgin_top = lcd_origin_top[int(lcd_origin_top.shape[0]/3):-1, :]
+    # cv2.imshow('origin', orgin_top)
     top = pipe(
         # trans(lambda img: cv2.threshold(img, 25, 255, cv2.THRESH_BINARY_INV)[1]),
-        trans(lambda img: cv2.erode(img, np.ones((3, 3), np.uint8))),
-        trans(lambda img: cv2.dilate(img, np.ones((3, 3), np.uint8))),
-        trans(lambda img: cv2.erode(img, np.ones((3, 3), np.uint8))),
-        trans(lambda img: cv2.dilate(img, np.ones((3, 3), np.uint8))),
-        trans(lambda img: cv2.erode(img, np.ones((3, 3), np.uint8))),
-        trans(lambda img: cv2.dilate(img, np.ones((3, 3), np.uint8))),
         trans(lambda img: cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)),
+        # tap(lambda img: cv2.imshow('G', img)),
         trans(lambda img: cv2.threshold(img, 50, 255, cv2.THRESH_BINARY_INV)[1]),
+        # tap(lambda img: cv2.imshow('B', img)),
+        trans(lambda img: cv2.erode(img, np.ones((3, 3), np.uint8))),
+        trans(lambda img: cv2.dilate(img, np.ones((3, 3), np.uint8))),
+        trans(lambda img: cv2.erode(img, np.ones((3, 3), np.uint8))),
+        trans(lambda img: cv2.dilate(img, np.ones((3, 3), np.uint8))),
+        trans(lambda img: cv2.erode(img, np.ones((3, 3), np.uint8))),
+        trans(lambda img: cv2.dilate(img, np.ones((3, 3), np.uint8))),
+        # tap(lambda img: cv2.imshow('A', img)),
     )(orgin_top)
-    fourPoint = getNumberImgFourPoint(top)
+    # cv2.imshow('canny', cv2.Canny(top, 50, 200, 255))
+    fourPoint = getNumberImgFourPoint(top, orgin_top)
     rgb = four_point_transform(orgin_top, fourPoint)
     threshold = four_point_transform(top, fourPoint)
+    # cv2.imshow('threshold', threshold)
     return [rgb, threshold]
 
 def getDownImg(lcd_origin):
@@ -163,18 +188,26 @@ def getDownImg(lcd_origin):
         # trans(lambda img: cv2.morphologyEx(img, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (10, 10)))),
         # trans(lambda img: cv2.erode(img, np.ones((5, 5), np.uint8))),
     )(orgin_down)
-    fourPoint = getNumberImgFourPoint(down)
+    fourPoint = getNumberImgFourPoint(down, orgin_down)
     rgb = four_point_transform(orgin_down, fourPoint)
     threshold = four_point_transform(down, fourPoint)
     return [rgb, threshold]
 
-def getNumImgArr(thImg, D = 10):
+def getNumImgArr(thImg, rgbImg, D = 10):
     # 找出 boundingRect 並依 X 座標值由小排到大
     contours, hierarchy = cv2.findContours(thImg.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     boundingRectArr = np.array([cv2.boundingRect(c) for c in contours])
+
+    # i = 1
+    # for rect in boundingRectArr:
+    #     x,y,w,h = rect
+    #     cv2.imshow(f'Rect{1}', cv2.rectangle(rgbImg,(x,y),(x+w,y+h),(0,255,0),2))
+
     boundingRectArr = boundingRectArr[boundingRectArr[:, 0].argsort()]
     # 於 Index 0 新增 isSelect flag 值
     boundingRectLogicArr = np.array([[0, *rect] for rect in boundingRectArr])
+    # print(boundingRectArr)
+    # print('')
     # 找出鄰近 boundingRect
     boundingRectGroup = []
     for item in boundingRectLogicArr:
@@ -209,8 +242,11 @@ def getNumImgArr(thImg, D = 10):
             [endX, endY],
             [endX, startY],
         ])
+        # print(item)
+        # print(fourPoint)
         # 忽略過小
         if (endX-startX) * (endY-startY) > 500:
+            # cv2.imshow(f'Rect{2}', cv2.rectangle(rgbImg,(startX,startY),(endX,endY),(0,255,0),2))
             boundingRectFourPoint.append(fourPoint)
     # 回傳數字圖像
     return [four_point_transform(thImg, fourPoint) for fourPoint in boundingRectFourPoint]
@@ -249,6 +285,7 @@ def sevenDisplayNum(img):
         segROI = img[yA:yB, xA:xB]
         total = cv2.countNonZero(segROI)
         area = (xB - xA) * (yB - yA)
+        # cv2.imshow(f'Rect{2}', cv2.rectangle(img,(xA,yA),(xB,xB),(0,255,0),2))
         # 如果非零区域的个数大于整个区域的一半，则认为该段是亮的
         matchPersent = 0.4
         # 右下比較細，需調低
@@ -268,16 +305,16 @@ def sevenDisplayNum(img):
 def getLCDTopNum(lcd_img):
     # 收縮壓
     [topRGB, topTH] = getTopImg(lcd_img)
-    topNumImgArr = getNumImgArr(topTH, D = 10)
-    # # for i in range(len(topNumImgArr)):
-    # #     cv2.imshow(f'Num-{i+1}', topNumImgArr[i])
+    topNumImgArr = getNumImgArr(topTH, topRGB, D = 10)
+    # for i in range(len(topNumImgArr)):
+    #     cv2.imwrite(f'output/TOPNum-{i+1}.png', topNumImgArr[i])
     topAllNumber = [sevenDisplayNum(numImg) for numImg in topNumImgArr]
     return "".join(topAllNumber)
 
 def getLCDDownNum(lcd_img):
     # 舒張壓
     [downRGB, downTH] = getDownImg(lcd_img)
-    downNumImgArr = getNumImgArr(downTH, D = 20)
+    downNumImgArr = getNumImgArr(downTH, downRGB, D = 20)
     # for i in range(len(downNumImgArr)):
     #     cv2.imshow(f'Num-{i+1}', downNumImgArr[i])
     downAllNumber = [sevenDisplayNum(numImg) for numImg in downNumImgArr]

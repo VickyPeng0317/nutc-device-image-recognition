@@ -16,7 +16,7 @@ import json
 # # # print(f'QRCode data:{qrcodeData}')
 
 # 讀取圖片 27 29
-test = 8
+test = 7
 image = cv2.imread(f"img/{str(test)}.png")
 print(f'\n')
 
