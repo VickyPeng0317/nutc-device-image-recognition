@@ -77,11 +77,11 @@ def showTestAns(failArr, allCount):
         print(data)
     failCount = len(failArr)
     successCount = allCount - failCount
-    print(f'Succes: {successCount}, Fail: {failCount}, {(successCount/allCount)*100}%')
+    print(f'圖像總數: {allCount}\n辨識成功: {successCount}\n辨識失敗: {failCount}\n辨識成功率: {(successCount/allCount)*100}%')
 
 ans = [
     #0
-    ['123', '82'],
+    ['110', '65'],
     ['123', '82'],
     ['133', '82'],
     ['122', '72'],
@@ -122,7 +122,7 @@ ans = [
     ['119', '74'],
     ['112', '68'],
     ['130', '81'],
-    ['182', '69'],
+    ['102', '69'],
     ['112', '70'],
     #40
     ['113', '71'],
