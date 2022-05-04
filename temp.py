@@ -7,18 +7,25 @@ from PIL import Image
 from pyzbar.pyzbar import decode
 from dbService import selectDevice
 import json
-from tempLogic import getQrcodeImg
+from tempLogic import getQrcodeImg, getLCDImg, getLCDNum
 
-test = 11
-image = cv2.imread(f"img2/{str(test)}.jpg")
-# print(f'\n')
-# qrcodeImg = getQrcodeImg(image)
-# qrcodeData = decode(qrcodeImg)[0].data
-# qrcodeDataJson = json.loads((str(qrcodeData)).split("b\'")[1].split("\'")[0])
-# deviceId = qrcodeDataJson['deviceId']
-# print('-------設備 QRCode 識別結果------')
-# print(f'QRCode 資料: {qrcodeDataJson}')
-# print(f'\n')
+# test = 1
+# image = cv2.imread(f"img2/{str(test)}.jpg")
+# # print(f'\n')
+# # qrcodeImg = getQrcodeImg(image)
+# # qrcodeData = decode(qrcodeImg)[0].data
+# # qrcodeDataJson = json.loads((str(qrcodeData)).split("b\'")[1].split("\'")[0])
+# # deviceId = qrcodeDataJson['deviceId']
+# # print('-------設備 QRCode 識別結果------')
+# # print(f'QRCode 資料: {qrcodeDataJson}')
+# # print(f'\n')
 
+# lcdImg = getLCDImg(image)
+# getLCDNum(lcdImg)
+
+for i in range(20):
+    image = cv2.imread(f"img2/{str(i+1)}.jpg")
+    lcdImg = getLCDImg(image)
+    getLCDNum(lcdImg)
 
 cv2.waitKey(0)
