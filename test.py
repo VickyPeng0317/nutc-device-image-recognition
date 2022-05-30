@@ -2,29 +2,38 @@ from imutils.perspective import four_point_transform
 from imutils import contours
 import imutils
 import cv2
-from logic import getLCDTopNum, getQrcodeImg, getLCDImg, getLCDTopNum, getLCDDownNum
+from logic import getLCDTopNum, getQrcodeImg, getLCDImg, getLCDTopNum, getLCDDownNum, getLCDTopNumImgArr, getLCDDownNumImgArr
 from base import pipe, trans  
 from PIL import Image
 from pyzbar.pyzbar import decode
 import os
 import shutil
+from datetime import datetime
 
 def test_qrcode(start = 1, count = 50):
     shutil.rmtree('output/FAILQR')
     os.mkdir('output/FAILQR')
+
+    start_time = datetime.now()
+    print("Start Time =", start_time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
 
     success = []
     fail = []
     for i in range(count):
         try:
             image = cv2.imread(f"img/{str(i+start)}.png")
+            
             qrcodeImg = getQrcodeImg(image)
             qrcodeData = decode(qrcodeImg)[0].data
             success.append(i+start)
+            # cv2.imwrite(f'output/SUCCESSQR/{str(i+start)}-qrcode.png', qrcodeImg)
         except:
-            cv2.imwrite(f'output/FAILQR/{str(i+start)}-qrcode.png', qrcodeImg)
+            # cv2.imwrite(f'output/FAILQR/{str(i+start)}-qrcode.png', qrcodeImg)
             fail.append(i+start)
-        
+
+    after_time = datetime.now()
+    print("After Time =", after_time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
+    print((after_time-start_time))
     print(f'success: {len(success)}, fail: {len(fail)}')
     print(fail)
 
@@ -60,6 +69,8 @@ def test_getDownNumber(start = 1, count = 50):
     showTestAns(fail, count)
 
 def test_getAllNumber(start = 1, count = 50):
+    start_time = datetime.now()
+    print("Start Time =", start_time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
     fail = []
     for _ in range(count):
         lcdImg = getLCDImg(cv2.imread(f"img/{start}.png"))
@@ -70,8 +81,29 @@ def test_getAllNumber(start = 1, count = 50):
         if (topNum != topAnsNum) or (downNum != downAnsNum):
             fail.append(f'{start}. {topAnsNum}->{topNum}, {downAnsNum}->{downNum}')
         start = start + 1
-    showTestAns(fail, count)
+    after_time = datetime.now()
+    print("After Time =", after_time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
+    print((after_time-start_time))
+    # showTestAns(fail, count)
 
+def test_getNumImgArr(start = 1, count = 50):
+    start_time = datetime.now()
+    print("Start Time =", start_time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
+    all = 0
+    final = 0
+    for _ in range(count):
+        lcdImg = getLCDImg(cv2.imread(f"img/{start}.png"))
+        topNumImgArr = getLCDTopNumImgArr(lcdImg)
+        downNumImgArr = getLCDDownNumImgArr(lcdImg)
+        [topNum, downNum] = ans[start-1]
+        all += len(topNum) + len(downNum)
+        final += len(topNumImgArr) + len(downNumImgArr)
+    print(f'all {all}')
+    print(f'final {final}')
+    after_time = datetime.now()
+    print("After Time =", after_time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
+    print((after_time-start_time))
+    
 def showTestAns(failArr, allCount):
     for data in failArr:
         print(data)

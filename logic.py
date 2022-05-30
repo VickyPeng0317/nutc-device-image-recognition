@@ -84,8 +84,8 @@ def getQrcodeImg(image):
 
     # print(int(mean))
     # return cv2.threshold(warped, hist[midpoint]*0.75, 255, cv2.THRESH_BINARY)[1]
-    # return cv2.threshold(warped, 170, 255, cv2.THRESH_BINARY)[1]
-    return warped
+    return cv2.threshold(warped, 175, 255, cv2.THRESH_BINARY)[1]
+    #return warped
 
 def getLCDImg(image):
     (B, R, G) = cv2.split(image)
@@ -354,3 +354,15 @@ def getLCDDownNum(lcd_img):
     return "".join(downAllNumber)
     # # cv2.imshow(f'testasdsa', downNumImgArr[0])
     # return sevenDisplayNum(downNumImgArr[0])
+
+def getLCDTopNumImgArr(lcd_img):
+    # 收縮壓
+    [topRGB, topTH] = getTopImg(lcd_img)
+    topNumImgArr = getNumImgArr(topTH, topRGB, D = 10)
+    return topNumImgArr
+
+def getLCDDownNumImgArr(lcd_img):
+    # 舒張壓
+    [downRGB, downTH] = getDownImg(lcd_img)
+    downNumImgArr = getNumImgArr(downTH, downRGB, D = 20)
+    return downNumImgArr
