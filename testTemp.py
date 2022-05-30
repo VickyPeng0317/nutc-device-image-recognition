@@ -30,45 +30,19 @@ def test_qrcode(start = 1, count = 50):
 
 def test_getLCDImg(start = 1, count = 50):
     for _ in range(count):
-        lcdImg = getLCDImg(cv2.imread(f"img/{start}.png"))
+        lcdImg = getLCDImg(cv2.imread(f"img2/{start}.jpg"))
         cv2.imshow(f'{str(start)}-lcdImg', lcdImg)
         start = start + 1
 
-def test_getTopNumber(start = 1, count = 50):
+def test_getNumber(start = 1, count = 50):
     fail = []
     for _ in range(count):
-        lcdImg = getLCDImg(cv2.imread(f"img/{start}.png"))
-        topNum = getLCDTopNum(lcdImg)
-        print(f"{start}: {topNum}")
-        ansNum = ans[start-1][0]
-        if topNum != ansNum:
-            fail.append(f'{start}. Ans: {ansNum}, Current: {topNum}')
-        start = start + 1
-    showTestAns(fail, count)
-
-
-def test_getDownNumber(start = 1, count = 50):
-    fail = []
-    for _ in range(count):
-        lcdImg = getLCDImg(cv2.imread(f"img/{start}.png"))
-        downNum = getLCDDownNum(lcdImg)
-        print(f"{start}: {downNum}")
-        ansNum = ans[start-1][1]
-        if downNum != ansNum:
-            fail.append(f'{start}. Ans: {ansNum}, Current: {downNum}')
-        start = start + 1
-    showTestAns(fail, count)
-
-def test_getAllNumber(start = 1, count = 50):
-    fail = []
-    for _ in range(count):
-        lcdImg = getLCDImg(cv2.imread(f"img/{start}.png"))
-        topNum = getLCDTopNum(lcdImg)
-        downNum = getLCDDownNum(lcdImg)
-        print(f"{start}: {topNum}, {downNum}")
-        [topAnsNum, downAnsNum] = ans[start-1]
-        if (topNum != topAnsNum) or (downNum != downAnsNum):
-            fail.append(f'{start}. {topAnsNum}->{topNum}, {downAnsNum}->{downNum}')
+        lcdImg = getLCDImg(cv2.imread(f"img2/{start}.jpg"))
+        num = getLCDNum(lcdImg)
+        print(f"{start}: {num}")
+        ansNum = ans[start-1]
+        if num != ansNum:
+            fail.append(f'{start}. Ans: {ansNum}, Current: {num}')
         start = start + 1
     showTestAns(fail, count)
 

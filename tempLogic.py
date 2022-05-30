@@ -31,7 +31,7 @@ def getQrcodeImg(image):
         peri = cv2.arcLength(c, True)
         approx = cv2.approxPolyDP(c, 0.02 * peri, True)
         weight = cv2.boundingRect(c)[2]
-        hight = cv2.boundingRect(c)[2]
+        hight = cv2.boundingRect(c)[3]
         # 找出有四個頂點的輪廓
         if len(approx) == 4 and weight*hight > 500:
             displayCnt = approx
@@ -90,8 +90,8 @@ def getLCDNum(lcd_img):
         i = i + 1
     # print(topNumImgArr[2].shape)
     topAllNumber = [sevenDisplayNum(numImg) for numImg in topNumImgArr]
-    print(f'{topAllNumber[0]}{topAllNumber[1]}.{topAllNumber[2]}')
-
+    # print(f'{topAllNumber[0]}{topAllNumber[1]}.{topAllNumber[2]}')
+    return f'{topAllNumber[0]}{topAllNumber[1]}.{topAllNumber[2]}'
 
 def getNumImgArr(thImg, rgbImg, D = 10):
     # 找出 boundingRect 並依 X 座標值由小排到大
@@ -100,6 +100,7 @@ def getNumImgArr(thImg, rgbImg, D = 10):
     boundingMean = (sum([r[2] * r[3] for r in boundingRectArr])/len(boundingRectArr))*0.75
     boundingRectArr = np.array(list(filter(lambda rect: (rect[2] * rect[3]) > boundingMean, boundingRectArr)))
     boundingRectArr = boundingRectArr[boundingRectArr[:, 0].argsort()]
+    # boundingRectArr = boundingRectArr[np.where((boundingRectArr[:, 2]*boundingRectArr[:, 3]) > 50)]
     # 於 Index 0 新增 isSelect flag 值
     boundingRectLogicArr = np.array([[0, *rect] for rect in boundingRectArr])
 

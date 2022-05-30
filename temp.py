@@ -8,7 +8,7 @@ from pyzbar.pyzbar import decode
 from dbService import selectDevice
 import json
 from tempLogic import getQrcodeImg, getLCDImg, getLCDNum
-from testTemp import test_qrcode
+from testTemp import test_qrcode, test_getNumber, test_getLCDImg
 # test = 1
 # image = cv2.imread(f"img2/{str(test)}.jpg")
 # # print(f'\n')
@@ -27,5 +27,5 @@ from testTemp import test_qrcode
 #     image = cv2.imread(f"img2/{str(i+1)}.jpg")
 #     lcdImg = getLCDImg(image)
 #     getLCDNum(lcdImg)
-test_qrcode(1, 20)
+test_getNumber(1, 20)
 cv2.waitKey(0)
