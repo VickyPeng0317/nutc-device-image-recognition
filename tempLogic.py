@@ -30,13 +30,15 @@ def getQrcodeImg(image):
         # 對輪廓進行相似比對
         peri = cv2.arcLength(c, True)
         approx = cv2.approxPolyDP(c, 0.02 * peri, True)
+        x = cv2.boundingRect(c)[0]
+        y = cv2.boundingRect(c)[1]
         weight = cv2.boundingRect(c)[2]
         hight = cv2.boundingRect(c)[3]
         # 找出有四個頂點的輪廓
         if len(approx) == 4 and weight*hight > 500:
+            # cv2.imshow('rectangle', cv2.rectangle(image,(x,y),(x+weight,y+hight),(0,255,0),5))
+            # cv2.imwrite(f'paper/qr/rectangle.png', cv2.rectangle(image,(x,y),(x+weight,y+hight),(0,255,0),5))
             displayCnt = approx
-       
-    
     # 把圖切出來
     warped = four_point_transform(gray, displayCnt.reshape(4, 2))
 
@@ -92,6 +94,17 @@ def getLCDNum(lcd_img):
     topAllNumber = [sevenDisplayNum(numImg) for numImg in topNumImgArr]
     # print(f'{topAllNumber[0]}{topAllNumber[1]}.{topAllNumber[2]}')
     return f'{topAllNumber[0]}{topAllNumber[1]}.{topAllNumber[2]}'
+
+def getLCDNumImgArr(lcd_img):
+    alter_lcd_img = pipe(
+        trans(lambda img: cv2.threshold(img, 100, 255, cv2.THRESH_BINARY)[1]),
+        trans(lambda img: cv2.erode(img, np.ones((3, 3), np.uint8))),
+        trans(lambda img: cv2.dilate(img, np.ones((3, 3), np.uint8))),
+        # trans(lambda img: cv2.dilate(img, np.ones((2, 2), np.uint8))),
+        # tap(lambda img: cv2.imshow('getDownImg', img)),
+    )(lcd_img)
+    numImgArr = getNumImgArr(alter_lcd_img, lcd_img, D = 40)
+    return numImgArr
 
 def getNumImgArr(thImg, rgbImg, D = 10):
     # 找出 boundingRect 並依 X 座標值由小排到大
