@@ -11,7 +11,7 @@ from lib import sharpen, modify_contrast_and_brightness2
 def getQrcodeImg(image):
     # cv2.imshow('image', image)
     # resize 500
-    image = imutils.resize(image, height=500)
+    # image = imutils.resize(image, height=500)
     height = image.shape[0]
     image = image[int(height/2):-1, :]
 
@@ -52,10 +52,14 @@ def getQrcodeImg(image):
     # 銳化
     # blur_img = cv2.GaussianBlur(warped, (0, 0), 150)
     # usm = cv2.addWeighted(warped, 1.5, blur_img, -0.5, 0)
+
+
     data= warped.reshape(1, warped.shape[0] * warped.shape[1])[0]
     mean = sum(data)/len(data)
     # print(int(mean))
     return cv2.threshold(warped, int(mean*0.895), 255, cv2.THRESH_BINARY)[1]
+
+    # return warped
 
 def getLCDImg(image):
     (B, R, G) = cv2.split(image)
