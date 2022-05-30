@@ -204,9 +204,10 @@ def getNumImgArr(thImg, rgbImg, D = 10):
     #     cv2.imshow(f'Rect{1}', cv2.rectangle(rgbImg,(x,y),(x+w,y+h),(0,255,0),2))
 
     boundingRectArr = boundingRectArr[boundingRectArr[:, 0].argsort()]
+    boundingRectArr = boundingRectArr[np.where((boundingRectArr[:, 2]*boundingRectArr[:, 3]) > 50)]
+
     # 於 Index 0 新增 isSelect flag 值
     boundingRectLogicArr = np.array([[0, *rect] for rect in boundingRectArr])
-    # print(boundingRectArr)
     # print('')
     # 找出鄰近 boundingRect
     boundingRectGroup = []
@@ -218,8 +219,10 @@ def getNumImgArr(thImg, rgbImg, D = 10):
             continue
         # 取得 x 座標
         startX = rect[0]
+        www = rect[2]
         # 找出鄰近 rect index， D為區間值
-        groupIndex = np.where((boundingRectLogicArr[:, 1] >= startX) & (boundingRectLogicArr[:, 1] <= (startX+D)))[0]
+        # print(www)
+        groupIndex = np.where((boundingRectLogicArr[:, 1] >= startX) & (boundingRectLogicArr[:, 1] <= (startX+(www*0.8))))[0]
         # 儲存鄰近 rect group 
         boundingRectGroup.append(boundingRectArr[groupIndex])
         # 將已選取的 rect 之 isSelect flag 設為 1
@@ -245,7 +248,7 @@ def getNumImgArr(thImg, rgbImg, D = 10):
         # print(item)
         # print(fourPoint)
         # 忽略過小
-        if (endX-startX) * (endY-startY) > 500:
+        if (endX-startX) * (endY-startY) > 300:
             # cv2.imshow(f'Rect{2}', cv2.rectangle(rgbImg,(startX,startY),(endX,endY),(0,255,0),2))
             boundingRectFourPoint.append(fourPoint)
     # 回傳數字圖像
