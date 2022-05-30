@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 from base import trans, tap, pipe
 from lib import sharpen, modify_contrast_and_brightness2
+from matplotlib import pyplot as plt
 
 def getQrcodeImg(image):
     # cv2.imshow('image', image)
@@ -41,7 +42,7 @@ def getQrcodeImg(image):
         weight = cv2.boundingRect(c)[2]
 
         # 找出有四個頂點的輪廓
-        if len(approx) == 4 and weight > 80:
+        if len(approx) == 4 and weight > 30:
             displayCnt = approx
             break
     
@@ -53,13 +54,38 @@ def getQrcodeImg(image):
     # blur_img = cv2.GaussianBlur(warped, (0, 0), 150)
     # usm = cv2.addWeighted(warped, 1.5, blur_img, -0.5, 0)
 
+    # hist = np.array(cv2.calcHist([warped],[0],None,[256],[0,256]))
+    # #Convert histogram to simple list
+    # hist = [val[0] for val in hist]
 
-    data= warped.reshape(1, warped.shape[0] * warped.shape[1])[0]
-    mean = sum(data)/len(data)
+    # #Generate a list of indices
+    # indices = list(range(0, 256))
+
+    # #Descending sort-by-key with histogram value as key
+    # s = [(x,y) for y,x in sorted(zip(hist,indices), reverse=True)]
+
+    # #Index of highest peak in histogram
+    # index_of_highest_peak = s[0][0]
+
+    # #Index of second highest peak in histogram
+    # index_of_second_highest_peak = s[1][0]
+
+    # midpoint = int( (index_of_highest_peak + index_of_second_highest_peak) / 2.0 )
+        
+
+
+    # plt.figure()#新建一個影象
+    # plt.title("Grayscale Histogram")
+    # plt.xlabel("Bins") #X軸標籤
+    # plt.ylabel("# of Pixels") #Y軸標籤
+    # plt.plot(hist)
+    # plt.xlim([0,256]) #設定x座標軸範圍
+    # plt.show()
+
     # print(int(mean))
-    return cv2.threshold(warped, int(mean*0.895), 255, cv2.THRESH_BINARY)[1]
-
-    # return warped
+    # return cv2.threshold(warped, hist[midpoint]*0.75, 255, cv2.THRESH_BINARY)[1]
+    # return cv2.threshold(warped, 170, 255, cv2.THRESH_BINARY)[1]
+    return warped
 
 def getLCDImg(image):
     (B, R, G) = cv2.split(image)

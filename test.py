@@ -9,7 +9,7 @@ from pyzbar.pyzbar import decode
 import os
 import shutil
 
-def test_qrcode(count = 50):
+def test_qrcode(start = 1, count = 50):
     shutil.rmtree('output/FAILQR')
     os.mkdir('output/FAILQR')
 
@@ -17,13 +17,13 @@ def test_qrcode(count = 50):
     fail = []
     for i in range(count):
         try:
-            image = cv2.imread(f"img/{str(i+1)}.png")
+            image = cv2.imread(f"img/{str(i+start)}.png")
             qrcodeImg = getQrcodeImg(image)
             qrcodeData = decode(qrcodeImg)[0].data
-            success.append(i+1)
+            success.append(i+start)
         except:
-            cv2.imwrite(f'output/FAILQR/{str(i+1)}-qrcode.png', qrcodeImg)
-            fail.append(i+1)
+            cv2.imwrite(f'output/FAILQR/{str(i+start)}-qrcode.png', qrcodeImg)
+            fail.append(i+start)
         
     print(f'success: {len(success)}, fail: {len(fail)}')
     print(fail)
