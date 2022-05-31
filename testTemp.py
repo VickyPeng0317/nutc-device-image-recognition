@@ -2,7 +2,7 @@ from imutils.perspective import four_point_transform
 from imutils import contours
 import imutils
 import cv2
-from tempLogic import getQrcodeImg, getLCDImg, getLCDNum, getLCDNumImgArr
+from tempLogic import sevenDisplayNum, getQrcodeImg, getLCDImg, getLCDNum, getLCDNumImgArr
 from base import pipe, trans  
 from PIL import Image
 from pyzbar.pyzbar import decode
@@ -24,8 +24,9 @@ def test_qrcode(start = 1, count = 50):
             qrcodeImg = getQrcodeImg(image)
             qrcodeData = decode(qrcodeImg)[0].data
             success.append(start+i)
+            # cv2.imwrite(f'output/TEMPQR/{str(start+i)}-qrcode.jpg', qrcodeImg)
         except:
-            cv2.imwrite(f'output/FAILTEMPQR/{str(start+i)}-qrcode.jpg', qrcodeImg)
+            # cv2.imwrite(f'output/TEMPQR/{str(start+i)}-qrcode.jpg', qrcodeImg)
             fail.append(start+i)
     after_time = datetime.now()
     print("After Time =", after_time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
@@ -54,21 +55,30 @@ def test_getNumber(start = 1, count = 50):
     after_time = datetime.now()
     print("After Time =", after_time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
     print((after_time-start_time))
-    showTestAns(fail, count)
+    # showTestAns(fail, count)
 
 def test_getLCDNumImgArr(start = 1, count = 50):
     start_time = datetime.now()
     print("Start Time =", start_time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
     all = 0
     final = 0
+    success = 0
     for _ in range(count):
         lcdImg = getLCDImg(cv2.imread(f"img2/{start}.jpg"))
         numImgArr = getLCDNumImgArr(lcdImg)
         numData = ans[start-1]
+        # 計算 Top 切割圖像準確率
+        numData2 = ''.join(numData.split('.'))
+        for index in range(len(numImgArr)):
+            numValue = sevenDisplayNum(numImgArr[index])
+            if (numData2[index] == numValue):
+                success += 1
         all += (len(numData) - 1)
         final += len(numImgArr)
+        start = start + 1
     print(f'all {all}')
     print(f'final {final}')
+    print(f'success {success}')
     after_time = datetime.now()
     print("After Time =", after_time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
     print((after_time-start_time))
@@ -101,5 +111,93 @@ ans = [
     '38.4',
     '38.5',
     '38.6',
-    '38.9'
+    '38.9',
+    # 20
+    '36.2', 
+    '36.2', 
+    '35.8', 
+    '35.8', 
+    '35.9', 
+    '35.9', 
+    '36.1', 
+    '36.6', 
+    '36.1', 
+    '36.3', 
+    # 30
+    '36.3', 
+    '36.3', 
+    '36.3', 
+    '36.2', 
+    '36.2', 
+    '36.3', 
+    '36.3', 
+    '36.2', 
+    '36.2', 
+    '36.2', 
+    # 40
+    '36.5', 
+    '36.6', 
+    '36.3', 
+    '36.5', 
+    '36.5', 
+    '36.5', 
+    '35.8', 
+    '35.8', 
+    '35.8', 
+    '36.4', 
+    # 50
+    '36.4', 
+    '36.4', 
+    '36.6', 
+    '36.6', 
+    '36.6', 
+    '36.2', 
+    '36.2', 
+    '36.2', 
+    '36.3', 
+    '36.3', 
+    # 60
+    '36.3', 
+    '36.4', 
+    '36.4', 
+    '36.4', 
+    '35.9', 
+    '35.9', 
+    '35.9', 
+    '36.3', 
+    '36.3', 
+    '36.3', 
+    # 70
+    '36.3', 
+    '36.3', 
+    '36.3', 
+    '36.4', 
+    '36.4', 
+    '36.4', 
+    '35.9', 
+    '35.9', 
+    '35.9', 
+    '36.2', 
+    # 80
+    '36.2', 
+    '36.2', 
+    '36.3', 
+    '36.3', 
+    '36.3', 
+    '36.2', 
+    '36.2', 
+    '36.2', 
+    '36.6', 
+    '36.6', 
+    # 90
+    '36.6', 
+    '36.2', 
+    '36.2', 
+    '36.2', 
+    '36.6', 
+    '36.6', 
+    '36.6', 
+    '36.2', 
+    '36.2', 
+    '36.2'
 ]

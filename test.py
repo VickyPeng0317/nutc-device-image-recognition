@@ -2,7 +2,7 @@ from imutils.perspective import four_point_transform
 from imutils import contours
 import imutils
 import cv2
-from logic import getLCDTopNum, getQrcodeImg, getLCDImg, getLCDTopNum, getLCDDownNum, getLCDTopNumImgArr, getLCDDownNumImgArr
+from logic import getLCDTopNum, getQrcodeImg, getLCDImg, getLCDTopNum, getLCDDownNum, getLCDTopNumImgArr, getLCDDownNumImgArr, sevenDisplayNum
 from base import pipe, trans  
 from PIL import Image
 from pyzbar.pyzbar import decode
@@ -91,15 +91,28 @@ def test_getNumImgArr(start = 1, count = 50):
     print("Start Time =", start_time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
     all = 0
     final = 0
+    success = 0
     for _ in range(count):
         lcdImg = getLCDImg(cv2.imread(f"img/{start}.png"))
         topNumImgArr = getLCDTopNumImgArr(lcdImg)
         downNumImgArr = getLCDDownNumImgArr(lcdImg)
         [topNum, downNum] = ans[start-1]
-        all += len(topNum) + len(downNum)
-        final += len(topNumImgArr) + len(downNumImgArr)
+        # 計算 Top 切割圖像準確率
+        for index in range(len(topNumImgArr)):
+            numValue = sevenDisplayNum(topNumImgArr[index])
+            if (topNum[index] == numValue):
+                success += 1
+        # 計算 Down 切割圖像準確率
+        for index in range(len(downNumImgArr)):
+            numValue = sevenDisplayNum(downNumImgArr[index])
+            if (downNum[index] == numValue):
+                success += 1
+        all = all + len(topNum) + len(downNum)
+        final = final + len(topNumImgArr) + len(downNumImgArr)
+        start = start + 1
     print(f'all {all}')
     print(f'final {final}')
+    print(f'success {success}')
     after_time = datetime.now()
     print("After Time =", after_time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3])
     print((after_time-start_time))
@@ -113,7 +126,7 @@ def showTestAns(failArr, allCount):
 
 ans = [
     #0
-    ['110', '65'],
+    ['123', '82'],
     ['123', '82'],
     ['133', '82'],
     ['122', '72'],
