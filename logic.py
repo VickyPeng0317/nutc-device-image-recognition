@@ -1,13 +1,8 @@
-from ast import Lambda
-from re import X
 from imutils.perspective import four_point_transform
-from imutils import contours
 import imutils
 import cv2
 import numpy as np
-from base import trans, tap, pipe
-from lib import sharpen, modify_contrast_and_brightness2
-from matplotlib import pyplot as plt
+from base import trans, pipe
 
 def getQrcodeImg(image):
     # cv2.imshow('image', image)

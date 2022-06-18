@@ -1,13 +1,9 @@
-from ast import Lambda
-from re import X
-from cv2 import imshow
+
 from imutils.perspective import four_point_transform
-from imutils import contours
 import imutils
 import cv2
 import numpy as np
-from base import trans, tap, pipe
-from lib import sharpen, modify_contrast_and_brightness2
+from base import trans, pipe
 
 def getQrcodeImg(image):
     image = imutils.resize(image, height=500)
@@ -86,10 +82,10 @@ def getLCDNum(lcd_img):
         # tap(lambda img: cv2.imshow('getDownImg', img)),
     )(lcd_img)
     topNumImgArr = getNumImgArr(alter_lcd_img, lcd_img, D = 40)
-    i = 0
-    for a in topNumImgArr:
-        cv2.imshow(f'qq{i}', a)
-        i = i + 1
+    # i = 0
+    # for a in topNumImgArr:
+    #     cv2.imshow(f'qq{i}', a)
+    #     i = i + 1
     # print(topNumImgArr[2].shape)
     topAllNumber = [sevenDisplayNum(numImg) for numImg in topNumImgArr]
     # print(f'{topAllNumber[0]}{topAllNumber[1]}.{topAllNumber[2]}')
@@ -128,6 +124,7 @@ def getNumImgArr(thImg, rgbImg, D = 10):
             continue
         # 取得 x 座標
         startX = rect[0]
+        www = rect[2]
         # 找出鄰近 rect index， D為區間值
         groupIndex = np.where((boundingRectLogicArr[:, 1] >= startX) & (boundingRectLogicArr[:, 1] <= (startX+D)))[0]
         # 儲存鄰近 rect group 
